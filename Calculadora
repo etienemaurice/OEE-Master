@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Calculadora de OEE</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color-scheme: light dark;
+    }
+    body {
+      margin: 0;
+      padding: 1.5rem;
+      background: #0f172a;
+      color: #e5e7eb;
+      display: flex;
+      justify-content: center;
+    }
+    .card {
+      width: 100%;
+      max-width: 1100px;
+      background: #020617;
+      border-radius: 1rem;
+      padding: 1.5rem 1.75rem 2rem;
+      box-shadow: 0 24px 60px rgba(15,23,42,0.7);
+      border: 1px solid #1e293b;
+    }
+    h1 {
+      font-size: 1.6rem;
+      margin: 0 0 0.25rem;
+      color: #f9fafb;
+    }
+    .subtitle {
+      margin: 0 0 1.25rem;
+      font-size: 0.9rem;
+      color: #9ca3af;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.6fr) minmax(0, 1.2fr);
+      gap: 1.25rem;
+      align-items: flex-start;
+    }
+    @media (max-width: 900px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.25rem;
+      margin-top: 1rem;
+    }
+    .panel {
+      background: #020617;
+      border-radius: 0.9rem;
+      border: 1px solid #1f2937;
+      padding: 1rem 1.1rem 1.2rem;
+    }
+    .panel h2 {
+      font-size: 1rem;
+      margin: 0 0 0.4rem;
+      color: #e5e7eb;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .tag {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      background: #111827;
+      border-radius: 999px;
+      padding: 0.08rem 0.45rem;
+      color: #9ca3af;
+      border: 1px solid #1f2937;
+    }
+    .help {
+      font-size: 0.78rem;
+      color: #6b7280;
+      margin-bottom: 0.7rem;
+    }
+    label {
+      font-size: 0.78rem;
+      color: #9ca3af;
+      display: block;
+      margin-bottom: 0.25rem;
+    }
+    .row {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 0.7rem;
+      margin-bottom: 0.55rem;
+      align-items: end;
+    }
+    input[type="number"] {
+      width: 100%;
+      box-sizing: border-box;
+      border-radius: 0.5rem;
+      border: 1px solid #1f2937;
+      padding: 0.5rem 0.55rem;
+      background: #020617;
+      color: #e5e7eb;
+      font-size: 0.85rem;
+    }
+    input[type="number"]:focus {
+      outline: 2px solid #2563eb;
+      outline-offset: 1px;
+      border-color: transparent;
+    }
+    .suffix {
+      font-size: 0.76rem;
+      color: #4b5563;
+      margin-left: 0.15rem;
+    }
+    .inline {
+      display: flex;
+      align-items: center;
+    }
+    .results {
+      margin-top: 0.75rem;
+      display: grid;
+      gap: 0.4rem;
+      font-size: 0.86rem;
+    }
+    .pill {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.45rem 0.6rem;
+      border-radius: 999px;
+      background: #020617;
+      border: 1px dashed #1f2937;
+      color: #e5e7eb;
+    }
+    .pill span:last-child {
+      font-variant-numeric: tabular-nums;
+      color: #e5e7eb;
+    }
+    .oee-big {
+      margin-top: 0.7rem;
+      padding: 0.8rem 0.9rem;
+      border-radius: 0.9rem;
+      background: radial-gradient(circle at top left, #22c55e33, transparent 55%), #020617;
+      border: 1px solid #15803d;
+    }
+    .oee-label {
+      font-size: 0.75rem;
+      color: #bbf7d0;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 0.1rem;
+    }
+    .oee-value {
+      font-size: 1.8rem;
+      font-weight: 600;
+      color: #bbf7d0;
+      font-variant-numeric: tabular-nums;
+    }
+    .oee-qual {
+      font-size: 0.8rem;
+      color: #6ee7b7;
+      margin-top: 0.15rem;
+    }
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.25rem;
+      margin-top: 0.3rem;
+    }
+    .mini-badge {
+      font-size: 0.65rem;
+      padding: 0.05rem 0.4rem;
+      border-radius: 999px;
+      background: #022c22;
+      color: #a7f3d0;
+      border: 1px solid #064e3b;
+    }
+    .footer-note {
+      margin-top: 1.1rem;
+      font-size: 0.75rem;
+      color: #6b7280;
+    }
+    .footer-note code {
+      font-size: 0.75rem;
+      background: #020617;
+      padding: 0.05rem 0.25rem;
+      border-radius: 0.35rem;
+      border: 1px solid #111827;
+      color: #9ca3af;
+    }
+
+    /* Painel do gráfico */
+    .chart-panel {
+      background: #020617;
+      border-radius: 0.9rem;
+      border: 1px solid #1f2937;
+      padding: 1rem 1.1rem 1.2rem;
+    }
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 0.5rem;
+      margin-bottom: 0.4rem;
+    }
+    .chart-title {
+      font-size: 1rem;
+      color: #e5e7eb;
+      margin: 0;
+    }
+    .chart-legend {
+      font-size: 0.7rem;
+      color: #9ca3af;
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+    .legend-swatch {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: #22c55e;
+    }
+    .legend-swatch-oee {
+      background: #22c55e;
+    }
+    .legend-swatch-meta {
+      background: #f97316;
+    }
+    .chart-subtitle {
+      font-size: 0.78rem;
+      color: #6b7280;
+      margin: 0 0 0.6rem;
+    }
+    .chart-container {
+      position: relative;
+      width: 100%;
+      height: 260px;
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+    }
+    .chart-meta {
+      margin-top: 0.5rem;
+      font-size: 0.75rem;
+      color: #9ca3af;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+    .chart-meta input {
+      width: 70px;
+      font-size: 0.75rem;
+      padding: 0.2rem 0.3rem;
+      border-radius: 0.35rem;
+      border: 1px solid #374151;
+      background: #020617;
+      color: #e5e7eb;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Calculadora de OEE</h1>
+    <p class="subtitle">Preencha os campos abaixo para calcular Disponibilidade, Performance, Qualidade e o OEE da célula / máquina.</p>
+
+    <div class="layout">
+      <!-- Lado esquerdo: entradas e resultados -->
+      <div>
+        <div class="grid">
+          <div class="panel">
+            <h2>
+              Disponibilidade
+              <span class="tag">Tempo</span>
+            </h2>
+            <p class="help">Use o tempo planejado de produção, descontando paradas planejadas (refeições, reuniões, setup planejado etc.).</p>
+
+            <div class="row">
+              <div>
+                <label for="tempo_planejado">Tempo planejado</label>
+                <div class="inline">
+                  <input id="tempo_planejado" type="number" min="0" step="0.01" placeholder="Ex.: 480" />
+                  <span class="suffix">min</span>
+                </div>
+              </div>
+              <div>
+                <label for="paradas_nao_planejadas">Paradas não planejadas</label>
+                <div class="inline">
+                  <input id="paradas_nao_planejadas" type="number" min="0" step="0.01" placeholder="Ex.: 65" />
+                  <span class="suffix">min</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="results">
+              <div class="pill">
+                <span>Tempo disponível:</span>
+                <span id="tempo_disponivel">0,00 min</span>
+              </div>
+              <div class="pill">
+                <span>Disponibilidade:</span>
+                <span id="disponibilidade">0,00 %</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <h2>
+              Performance
+              <span class="tag">Velocidade</span>
+            </h2>
+            <p class="help">Performance compara a produção real com o que deveria ser produzido no tempo disponível, na velocidade teórica.</p>
+
+            <div class="row">
+              <div>
+                <label for="taxa_teorica">Taxa teórica</label>
+                <div class="inline">
+                  <input id="taxa_teorica" type="number" min="0" step="0.01" placeholder="Ex.: 60" />
+                  <span class="suffix">peças/h</span>
+                </div>
+              </div>
+              <div>
+                <label for="producao_bruta">Produção bruta</label>
+                <div class="inline">
+                  <input id="producao_bruta" type="number" min="0" step="0.01" placeholder="Ex.: 420" />
+                  <span class="suffix">peças</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="results">
+              <div class="pill">
+                <span>Produção teórica:</span>
+                <span id="producao_teorica">0,00 peças</span>
+              </div>
+              <div class="pill">
+                <span>Performance:</span>
+                <span id="performance">0,00 %</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <h2>
+              Qualidade
+              <span class="tag">Refugos</span>
+            </h2>
+            <p class="help">Considere como peças boas apenas as aprovadas no fim do processo (sem retrabalho pendente).</p>
+
+            <div class="row">
+              <div>
+                <label for="pecas_boas">Peças boas</label>
+                <div class="inline">
+                  <input id="pecas_boas" type="number" min="0" step="0.01" placeholder="Ex.: 405" />
+                  <span class="suffix">peças</span>
+                </div>
+              </div>
+              <div>
+                <label for="pecas_refugo">Refugo / retrabalho</label>
+                <div class="inline">
+                  <input id="pecas_refugo" type="number" min="0" step="0.01" placeholder="Ex.: 15" />
+                  <span class="suffix">peças</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="results">
+              <div class="pill">
+                <span>Total produzido:</span>
+                <span id="total_produzido">0,00 peças</span>
+              </div>
+              <div class="pill">
+                <span>Qualidade:</span>
+                <span id="qualidade">0,00 %</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="oee-big" aria-live="polite">
+          <div class="oee-label">OEE (Disponibilidade × Performance × Qualidade)</div>
+          <div class="oee-value" id="oee_total">0,00 %</div>
+          <div class="oee-qual" id="oee_class">Aguardando dados para classificar o OEE.</div>
+          <div class="badge-row">
+            <span class="mini-badge" id="badge_disp">Disp: 0,00 %</span>
+            <span class="mini-badge" id="badge_perf">Perf: 0,00 %</span>
+            <span class="mini-badge" id="badge_qual">Qual: 0,00 %</span>
+          </div>
+        </div>
+
+        <p class="footer-note">
+          Fórmulas usadas: <code>Disponibilidade = (Tempo planejado − Paradas não planejadas) ÷ Tempo planejado</code>,
+          <code>Performance = Produção real ÷ Produção teórica</code>,
+          <code>Qualidade = Peças boas ÷ Total produzido</code>,
+          <code>OEE = Disp × Perf × Qual</code>.
+        </p>
+      </div>
+
+      <!-- Lado direito: gráfico -->
+      <div class="chart-panel">
+        <div class="chart-header">
+          <h2 class="chart-title">Gráfico de OEE (histórico rápido)</h2>
+          <div class="chart-legend">
+            <div class="legend-item">
+              <span class="legend-swatch legend-swatch-oee"></span>
+              <span>OEE calculado</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-swatch legend-swatch-meta"></span>
+              <span>Meta OEE</span>
+            </div>
+          </div>
+        </div>
+        <p class="chart-subtitle">Cada vez que os dados mudarem, um novo ponto é adicionado ao gráfico (máx. 20 pontos).</p>
+
+        <div class="chart-container">
+          <canvas id="oeeChart"></canvas>
+        </div>
+
+        <div class="chart-meta">
+          <span>Escala do eixo Y: 0% a 100%.</span>
+          <span>
+            Meta OEE:
+            <input id="meta_oee" type="number" min="0" max="100" step="0.1" value="85" /> %
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    function safeNumber(value) {
+      const n = parseFloat((value || '').toString().replace(',', '.'));
+      return isNaN(n) ? 0 : n;
+    }
+
+    function formatNumber(value, suffix = '', decimals = 2) {
+      return value.toLocaleString('pt-BR', {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals,
+      }) + (suffix ? ' ' + suffix : '');
+    }
+
+    function classificaOEE(oee) {
+      if (oee === 0) return 'Aguardando dados para classificar o OEE.';
+      if (oee < 60) return 'OEE em nível crítico, foco imediato em perdas de parada, velocidade e refugo.';
+      if (oee < 75) return 'OEE em nível razoável, trabalhe em um plano de melhoria contínua estruturado.';
+      if (oee < 85) return 'OEE bom, mantenha disciplina na rotina e ataque as maiores perdas.';
+      return 'OEE de classe mundial, concentre-se em sustentar o desempenho e padronizar as boas práticas.';
+    }
+
+    // Dados do gráfico
+    const chartState = {
+      points: [],  // { x: index, y: oee }
+      maxPoints: 20
+    };
+
+    function addOeePoint(oeePercent) {
+      const x = chartState.points.length > 0
+        ? chartState.points[chartState.points.length - 1].x + 1
+        : 1;
+
+      chartState.points.push({ x, y: oeePercent });
+
+      if (chartState.points.length > chartState.maxPoints) {
+        chartState.points.shift();
+      }
+      drawChart();
+    }
+
+    function drawChart() {
+      const canvas = $('oeeChart');
+      if (!canvas) return;
+
+      const ctx = canvas.getContext('2d');
+      const width = canvas.clientWidth;
+      const height = canvas.clientHeight;
+
+      // Ajusta canvas para alta definição
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      ctx.scale(dpr, dpr);
+
+      // Limpa
+      ctx.clearRect(0, 0, width, height);
+
+      // Se não houver pontos, desenha mensagem simples
+      if (chartState.points.length === 0) {
+        ctx.fillStyle = '#6b7280';
+        ctx.font = '12px system-ui';
+        ctx.fillText('Sem dados ainda. Digite valores para ver o OEE no gráfico.', 10, height / 2);
+        return;
+      }
+
+      const padding = { top: 10, right: 16, bottom: 24, left: 32 };
+      const innerWidth = width - padding.left - padding.right;
+      const innerHeight = height - padding.top - padding.bottom;
+
+      // Eixo Y: 0 a 100
+      const yMin = 0;
+      const yMax = 100;
+
+      // Eixo X: 1 a último índice
+      const xMin = chartState.points[0].x;
+      const xMax = chartState.points[chartState.points.length - 1].x;
+
+      function xToPx(x) {
+        if (xMax === xMin) return padding.left + innerWidth / 2;
+        return padding.left + ((x - xMin) / (xMax - xMin)) * innerWidth;
+      }
+
+      function yToPx(y) {
+        const ratio = (y - yMin) / (yMax - yMin);
+        return padding.top + (1 - ratio) * innerHeight;
+      }
+
+      // Fundo
+      ctx.fillStyle = '#020617';
+      ctx.fillRect(0, 0, width, height);
+
+      // Grid horizontal (a cada 20%)
+      ctx.strokeStyle = '#111827';
+      ctx.lineWidth = 1;
+      ctx.font = '10px system-ui';
+      ctx.fillStyle = '#6b7280';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+
+      for (let v = 0; v <= 100; v += 20) {
+        const y = yToPx(v);
+        ctx.beginPath();
+        ctx.moveTo(padding.left, y);
+        ctx.lineTo(width - padding.right, y);
+        ctx.stroke();
+
+        ctx.fillText(v + '%', padding.left - 4, y);
+      }
+
+      // Linha da meta
+      const metaInput = $('meta_oee');
+      const metaValue = safeNumber(metaInput.value);
+      const metaY = yToPx(metaValue);
+
+      ctx.strokeStyle = '#f97316';
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(padding.left, metaY);
+      ctx.lineTo(width - padding.right, metaY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Curva de OEE
+      ctx.strokeStyle = '#22c55e';
+      ctx.lineWidth = 2;
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+
+      ctx.beginPath();
+      chartState.points.forEach((p, idx) => {
+        const px = xToPx(p.x);
+        const py = yToPx(p.y);
+        if (idx === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      });
+      ctx.stroke();
+
+      // Pontos
+      ctx.fillStyle = '#22c55e';
+      chartState.points.forEach((p) => {
+        const px = xToPx(p.x);
+        const py = yToPx(p.y);
+        ctx.beginPath();
+        ctx.arc(px, py, 3, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // Eixo X simples (sem labels de tempo)
+      ctx.strokeStyle = '#111827';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(padding.left, height - padding.bottom);
+      ctx.lineTo(width - padding.right, height - padding.bottom);
+      ctx.stroke();
+    }
+
+    function recalcular() {
+      const tempoPlanejado = safeNumber($('tempo_planejado').value);
+      const paradasNaoPlanejadas = safeNumber($('paradas_nao_planejadas').value);
+      const taxaTeoricaHora = safeNumber($('taxa_teorica').value);
+      const producaoBruta = safeNumber($('producao_bruta').value);
+      const pecasBoas = safeNumber($('pecas_boas').value);
+      const pecasRefugo = safeNumber($('pecas_refugo').value);
+
+      const tempoDisponivel = Math.max(tempoPlanejado - paradasNaoPlanejadas, 0);
+      const disponibilidade = tempoPlanejado > 0 ? tempoDisponivel / tempoPlanejado : 0;
+
+      const tempoDisponivelHoras = tempoDisponivel / 60;
+      const producaoTeorica = tempoDisponivelHoras * taxaTeoricaHora;
+      const performance = producaoTeorica > 0 ? producaoBruta / producaoTeorica : 0;
+
+      const totalProduzido = Math.max(pecasBoas + pecasRefugo, 0);
+      const qualidade = totalProduzido > 0 ? pecasBoas / totalProduzido : 0;
+
+      const oee = disponibilidade * performance * qualidade;
+      const oeePercent = oee * 100;
+
+      $('tempo_disponivel').textContent = formatNumber(tempoDisponivel, 'min');
+      $('disponibilidade').textContent = formatNumber(disponibilidade * 100, '%');
+      $('producao_teorica').textContent = formatNumber(producaoTeorica, 'peças');
+      $('performance').textContent = formatNumber(performance * 100, '%');
+      $('total_produzido').textContent = formatNumber(totalProduzido, 'peças');
+      $('qualidade').textContent = formatNumber(qualidade * 100, '%');
+
+      $('oee_total').textContent = formatNumber(oeePercent, '%');
+      $('oee_class').textContent = classificaOEE(oeePercent);
+
+      $('badge_disp').textContent = 'Disp: ' + formatNumber(disponibilidade * 100, '%', 1);
+      $('badge_perf').textContent = 'Perf: ' + formatNumber(performance * 100, '%', 1);
+      $('badge_qual').textContent = 'Qual: ' + formatNumber(qualidade * 100, '%', 1);
+
+      // Só adiciona ao gráfico se houver dados minimamente consistentes
+      if (oeePercent > 0 && !isNaN(oeePercent) && isFinite(oeePercent)) {
+        addOeePoint(Math.max(0, Math.min(100, oeePercent)));
+      } else {
+        drawChart();
+      }
+    }
+
+    ['tempo_planejado','paradas_nao_planejadas','taxa_teorica','producao_bruta','pecas_boas','pecas_refugo','meta_oee']
+      .forEach(id => {
+        $(id).addEventListener('input', () => {
+          if (id === 'meta_oee') {
+            // Atualiza apenas o gráfico (linha de meta)
+            drawChart();
+          } else {
+            recalcular();
+          }
+        });
+      });
+
+    window.addEventListener('resize', drawChart);
+
+    // Inicializa
+    recalcular();
+  </script>
+</body>
+</html>
